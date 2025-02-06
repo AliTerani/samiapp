@@ -2,10 +2,10 @@
 header('Content-Type: application/json');
 
 // Database connection
-$servername = "localhost";
-$username = "root"; // Replace with your database username
-$password = ""; // Replace with your database password
-$dbname = "event_management"; // Replace with your database name
+$servername = "193.203.168.121";
+$username = "u402158123_saminew2025"; // Replace with your database username
+$password = "Sami@2025"; // Replace with your database password
+$dbname = "u402158123_event_manage"; // Replace with your database name
 
 // Create connection
 $conn = new mysqli($servername, $username, $password, $dbname);
