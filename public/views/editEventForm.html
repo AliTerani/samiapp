@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Event</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gradient-to-r from-blue-500 to-indigo-600 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-3xl relative">
+    <!-- Close Button -->
+    <button id="close-button" class="close-button">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <!-- Form Header -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
+      <h1 class="text-2xl font-bold text-white flex items-center">
+        <i class="fas fa-calendar-edit mr-3"></i>
+        Edit Event
+      </h1>
+    </div>
+
+    <!-- Form Body -->
+    <form id="edit-event-form" class="p-6 space-y-6">
+      <!-- Event Image, Name, Location, etc. -->
+      <!-- Add fields similar to addEventForm.html -->
+
+      <!-- Status Dropdown -->
+      <div class="space-y-2">
+        <label class="block text-gray-700 font-medium flex items-center">
+          <i class="fas fa-toggle-on text-blue-500 mr-2"></i>
+          Status
+        </label>
+        <select name="status" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect custom-dropdown" required>
+          <option value="Active">Active</option>
+          <option value="Archived">Archived</option>
+        </select>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-lg hover:from-blue-600 hover:to-indigo-700 transition duration-300 flex items-center justify-center">
+        <i class="fas fa-save mr-2"></i>
+        Save Changes
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // Fetch event data and populate the form
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('event_id');
+
+    async function fetchEventData() {
+      try {
+        const response = await fetch(`/get-event?id=${eventId}`);
+        if (!response.ok) throw new Error('Failed to fetch event data');
+
+        const event = await response.json();
+        const form = document.getElementById('edit-event-form');
+
+        // Populate form fields with event data
+        form.elements['event_name'].value = event.event_name;
+        form.elements['event_location'].value = event.event_location;
+        form.elements['event_country'].value = event.event_country;
+        form.elements['start_date'].value = event.start_date;
+        form.elements['end_date'].value = event.end_date;
+        form.elements['status'].value = event.status;
+        // Populate other fields as needed
+      } catch (error) {
+        console.error('Error fetching event data:', error);
+        alert('Failed to load event data. Please try again.');
+      }
+    }
+
+    // Fetch event data when the page loads
+    document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('event_id');
+
+    if (!eventId) {
+        alert("Invalid event. Please try again.");
+        window.location.href = "/dashboard";
+        return;
+    }
+
+    try {
+        const response = await fetch(`/get-event?id=${eventId}`);
+
+        if (!response.ok) throw new Error('Failed to fetch event data');
+
+        const event = await response.json();
+        const form = document.getElementById('editEventForm.html');
+
+        // Populate form fields with event data
+        form.elements['event_name'].value = event.event_name || "";
+        form.elements['event_location'].value = event.event_location || "";
+        form.elements['event_country'].value = event.event_country || "";
+        form.elements['start_date'].value = event.start_date || "";
+        form.elements['end_date'].value = event.end_date || "";
+        form.elements['status'].value = event.status || "";
+
+    } catch (error) {
+        console.error('Error fetching event data:', error);
+        alert('Failed to load event data. Please try again.');
+        window.location.href = "/dashboard"; // Redirect user if event fails to load
+    }
+});
+
+
+    // Handle form submission
+    document.getElementById('edit-event-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+
+      try {
+        const response = await fetch(`/update-event?id=${eventId}`, {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) throw new Error(await response.text());
+
+        const result = await response.json();
+        alert(result.message);
+        window.location.href = '/dashboard'; // Redirect to dashboard
+      } catch (error) {
+        console.error('Error updating event:', error);
+        alert('Failed to update event. Please try again.');
+      }
+    });
+  </script>
+</body>
+</html>

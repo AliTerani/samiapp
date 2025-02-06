@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>POS - Event Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Custom styles for the POS page */
+    .glow-effect:focus {
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+    }
+
+    .quantity-btn {
+      transition: transform 0.2s ease-in-out;
+    }
+
+    .quantity-btn:hover {
+      transform: scale(1.1);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 0.5rem;
+      width: 90%;
+      max-width: 400px;
+    }
+
+    /* Close button styling */
+    .close-button {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: white;
+      font-size: 1.5rem;
+      transition: color 0.2s ease-in-out;
+    }
+
+    .close-button:hover {
+      color: #ff4757; /* Red color on hover */
+    }
+
+    /* Actor card styling */
+    .actor-card {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .actor-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Success message styling */
+    .success-message {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      background-color: #10B981; /* Green color */
+      color: white;
+      padding: 1rem 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+      z-index: 1000;
+    }
+
+    /* Sticky Total and Pay Now Section */
+  .sticky-total-section {
+    position: sticky;
+    bottom: 0;
+    background-color: white;
+    padding: 1rem;
+    border-top: 1px solid #e5e7eb;
+    z-index: 1000;
+    box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  .sticky-total-section .total-amount {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #3b82f6;
+  }
+
+  .sticky-total-section .pay-button {
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+    .success-message.show {
+      transform: translateX(0);
+    }
+
+    @media print {
+  body * {
+    visibility: hidden;
+  }
+  #receipt-modal, #receipt-modal * {
+    visibility: visible;
+  }
+  #receipt-modal {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+  }
+}
+
+/* Scrollable form content */
+.scrollable-form {
+  max-height: calc(100vh - 300px); /* Adjust height based on your layout */
+  overflow-y: auto;
+  padding-bottom: 120px; /* Space for the sticky footer */
+}
+
+/* Sticky Total and Pay Now Section */
+.sticky-footer {
+  position: sticky;
+  bottom: 0;
+  background-color: white;
+  padding: 1rem;
+  border-top: 1px solid #e5e7eb;
+  z-index: 1000;
+  box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.sticky-footer .total-amount {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #3b82f6;
+}
+
+.sticky-footer .pay-button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+  </style>
+</head>
+<body class="bg-gradient-to-r from-blue-500 to-indigo-600 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-6xl bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-3xl relative">
+    <!-- Close Button -->
+    <button id="close-button" class="close-button">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <!-- POS Header -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
+      <div class="flex flex-col items-center space-y-4">
+        <h1 class="text-2xl font-bold text-white flex items-center">
+          <i class="fas fa-cash-register mr-3"></i>
+          Point of Sale (POS)
+        </h1>
+        <h2 class="text-xl font-semibold text-white">
+          Event: <span id="event-name" class="font-bold text-yellow-300">Loading...</span>
+        </h2>
+      </div>
+    </div>
+    <!-- POS Body -->
+    <div class="p-6">
+      <!-- Scrollable Form Content -->
+      <div class="scrollable-form">
+        <!-- Actors List -->
+        <div id="actors-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <!-- Actors will be dynamically inserted here -->
+      </div>
+
+    <!-- Add this inside the POS Body section -->
+    <!-- Select Showtime -->
+    <div class="space-y-2 mt-6">
+      <label class="block text-gray-700 font-medium flex items-center">
+        <i class="fas fa-clock text-blue-500 mr-2"></i>
+        Select Showtime
+      </label>
+      <select id="showtime-select" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect custom-dropdown" required>
+        <!-- Showtimes will be dynamically inserted here -->
+      </select>
+    </div>
+
+    <!-- Add this below the Select Showtime box -->
+    <!-- Action Buttons -->
+    <div class="flex justify-between space-x-4 mt-6">
+      <!-- All Camira Button -->
+      <button id="all-camira-button" class="w-full py-2 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-300 flex items-center justify-center">
+        <i class="fas fa-camera-retro mr-2"></i>
+        All Camira
+      </button>
+
+      <!-- All Mobile Button -->
+      <!-- All Mobile Button -->
+      <button id="all-mobile-button" class="w-full py-2 bg-green-500 text-white font-bold rounded-lg hover:bg-green-600 transition duration-300 flex items-center justify-center">
+        <i class="fas fa-mobile-alt mr-2"></i>
+        All Mobile
+      </button>
+
+      <!-- Clear All Button -->
+      <!-- Clear All Button -->
+      <button id="clear-all-button" class="w-full py-2 bg-red-500 text-white font-bold rounded-lg hover:bg-red-600 transition duration-300 flex items-center justify-center">
+        <i class="fas fa-trash-alt mr-2"></i>
+        Clear All
+      </button>
+    </div>
+  </div>
+
+      <!-- Sticky Footer with Total and Pay Now Button -->
+    <div class="sticky-footer">
+      <div class="flex justify-between items-center">
+        <span class="text-gray-700">Total Amount:</span>
+        <span id="total-amount" class="total-amount">0.00 KWD</span>
+      </div>
+      <button id="pay-button" class="pay-button w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-lg hover:from-green-600 hover:to-green-700 transition duration-300 flex items-center justify-center">
+        <i class="fas fa-credit-card mr-2"></i>
+        Pay Now
+      </button>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div id="payment-modal" class="modal">
+    <div class="modal-content">
+      <!-- Close Button -->
+      <button id="close-payment-modal" class="close-button">
+        <i class="fas fa-times"></i>
+      </button>
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Payment Method</h2>
+      <form id="payment-form" class="space-y-4">
+        <div>
+          <label class="block text-gray-700 font-medium">Payment Method</label>
+          <select name="payment_method" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" required>
+            <option value="Cash">Cash</option>
+            <option value="Knet">Knet</option>
+          </select>
+        </div>
+        <div id="cash-section" class="hidden">
+          <label class="block text-gray-700 font-medium">Cash Received</label>
+          <input type="number" name="cash_received" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Enter cash received">
+        </div>
+        <button type="submit" class="w-full py-2 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-300">
+          Confirm Payment
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Receipt Modal -->
+<div id="receipt-modal" class="modal">
+  <div class="modal-content bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+    <!-- Close Button -->
+    <button id="close-receipt-modal" class="close-button">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <!-- Receipt Header -->
+    <div class="text-center mb-6">
+      <img src="/samilogo.png" alt="Logo" class="w-24 h-24 mx-auto mb-4">
+      <h2 class="text-2xl font-bold text-gray-800">Payment Receipt</h2>
+      <p class="text-gray-600">Thank you for your payment!</p>
+    </div>
+
+    <!-- Receipt Details -->
+    <div class="space-y-4">
+      <div class="flex justify-between">
+        <span class="text-gray-600">Transaction ID:</span>
+        <span id="receipt-transaction-id" class="font-bold text-gray-800">123456</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-600">Event Name:</span>
+        <span id="receipt-event-name" class="font-bold text-gray-800">Event Name</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-600">Date:</span>
+        <span id="receipt-date" class="font-bold text-gray-800">2023-10-15</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-600">Payment Method:</span>
+        <span id="receipt-payment-method" class="font-bold text-gray-800">Cash</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-gray-600">Total Amount:</span>
+        <span id="receipt-total-amount" class="font-bold text-gray-800">50.00 KWD</span>
+      </div>
+    </div>
+
+    <!-- QR Code -->
+    <div class="mt-6 text-center">
+      <div id="receipt-qrcode" class="mx-auto"></div>
+      <p class="text-gray-600 mt-2">Scan this QR code for transaction details.</p>
+    </div>
+
+    <!-- Print Button -->
+    <div class="mt-6 text-center">
+      <button id="print-receipt" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition duration-300">
+        <i class="fas fa-print mr-2"></i>Print Receipt
+      </button>
+    </div>
+  </div>
+</div>
+  <script>
+    // Get the event ID from the URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const eventId = urlParams.get('event_id');
+
+    let selectedActors = [];
+    let totalAmount = 0;
+    let eventCamiraPrice = 0;
+    let eventMobilePrice = 0;
+    let event = null;
+
+    // Fetch event and actors data
+    async function fetchEventAndActors() {
+  try {
+    const response = await fetch(`/get-event?id=${eventId}`);
+    if (!response.ok) throw new Error('Failed to fetch event');
+
+    event = await response.json();
+
+    // Update the event name in the POS header
+    const eventNameElement = document.getElementById('event-name');
+    if (eventNameElement) {
+      eventNameElement.textContent = event.event_name;
+    }
+
+    const actorsResponse = await fetch('/get-actors');
+    if (!actorsResponse.ok) throw new Error('Failed to fetch actors');
+
+    const actors = await actorsResponse.json();
+
+    // Store the event's Camira and Mobile prices
+    eventCamiraPrice = parseFloat(event.camira_price);
+    eventMobilePrice = parseFloat(event.mobile_price);
+
+    // Filter actors based on selected actors in the event
+    const selectedActorIds = JSON.parse(event.selected_actors).map(actor => actor.id);
+    const filteredActors = actors.filter(actor => selectedActorIds.includes(actor.id));
+
+    // Populate the showtime dropdown
+    const showtimeSelect = document.getElementById('showtime-select');
+    showtimeSelect.innerHTML = '';
+
+    const showtimes = JSON.parse(event.showtimes);
+    for (const date in showtimes) {
+      const option = document.createElement('option');
+      option.value = `${date} ${showtimes[date]}`;
+      option.textContent = `${date} - ${showtimes[date]}`;
+      showtimeSelect.appendChild(option);
+    }
+
+    // Populate selectedActors with actor data
+    selectedActors = filteredActors.map(actor => ({
+      id: actor.id,
+      actor_name: actor.actor_name,
+      actor_image: actor.actor_image,
+      camira_price: eventCamiraPrice,
+      mobile_price: eventMobilePrice,
+      camira_quantity: 0,
+      mobile_quantity: 0,
+    }));
+
+    // Display actors in a grid layout
+const actorsListContainer = document.getElementById('actors-list');
+actorsListContainer.innerHTML = '';
+
+selectedActors.forEach(actor => {
+  const actorCard = document.createElement('div');
+  actorCard.classList.add('actor-card', 'bg-white', 'p-3', 'rounded-lg', 'shadow-md', 'cursor-pointer', 'transition-transform', 'duration-300', 'hover:scale-105');
+  actorCard.innerHTML = `
+    <div class="flex flex-col items-center space-y-2">
+      <!-- Actor Image -->
+      <img src="${actor.actor_image}" alt="${actor.actor_name}" class="w-16 h-16 rounded-full object-cover">
+
+      <!-- Actor Name -->
+      <h2 class="text-base font-bold text-gray-800 text-center">${actor.actor_name}</h2>
+
+      <!-- Camira Quantity Controls -->
+      <div class="text-center">
+        <span class="text-base text-gray-600">Camira:</span>
+        <div class="flex items-center justify-center mt-1">
+          <button class="quantity-btn bg-blue-500 text-white px-2 py-1 rounded-lg text-base" data-actor-id="${actor.id}" data-type="camira" data-action="decrease">-</button>
+          <span id="camira-${actor.id}" class="mx-2 text-base">0</span>
+          <button class="quantity-btn bg-blue-500 text-white px-2 py-1 rounded-lg text-base" data-actor-id="${actor.id}" data-type="camira" data-action="increase">+</button>
+        </div>
+      </div>
+
+      <!-- Mobile Quantity Controls -->
+      <div class="text-center">
+        <span class="text-base text-gray-600">Mobile:</span>
+        <div class="flex items-center justify-center mt-1">
+          <button class="quantity-btn bg-green-500 text-white px-2 py-1 rounded-lg text-base" data-actor-id="${actor.id}" data-type="mobile" data-action="decrease">-</button>
+          <span id="mobile-${actor.id}" class="mx-2 text-base">0</span>
+          <button class="quantity-btn bg-green-500 text-white px-2 py-1 rounded-lg text-base" data-actor-id="${actor.id}" data-type="mobile" data-action="increase">+</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  actorsListContainer.appendChild(actorCard);
+});
+    // Add event listeners for quantity buttons
+    document.querySelectorAll('.quantity-btn').forEach(button => {
+      button.addEventListener('click', (e) => {
+        const actorId = e.target.getAttribute('data-actor-id');
+        const type = e.target.getAttribute('data-type');
+        const action = e.target.getAttribute('data-action');
+
+        updateQuantity(actorId, type, action);
+      });
+    });
+  } catch (error) {
+    console.error('Error fetching event and actors:', error);
+    alert('Failed to load event and actors. Please try again.');
+  }
+}
+    // Update quantity and total amount
+    function updateQuantity(actorId, type, action) {
+      const actor = selectedActors.find(actor => actor.id == actorId);
+      if (!actor) return;
+
+      const quantityElement = document.getElementById(`${type}-${actorId}`);
+      let quantity = parseInt(quantityElement.innerText);
+
+      if (action === 'increase') {
+        quantity += 1;
+      } else if (action === 'decrease' && quantity > 0) {
+        quantity -= 1;
+      }
+
+      quantityElement.innerText = quantity;
+
+      // Update actor's quantity in selectedActors array
+      if (type === 'camira') {
+        actor.camira_quantity = quantity;
+      } else if (type === 'mobile') {
+        actor.mobile_quantity = quantity;
+      }
+
+      // Update total amount
+      calculateTotalAmount();
+    }
+
+    // Calculate total amount
+    function calculateTotalAmount() {
+      totalAmount = 0;
+
+      selectedActors.forEach(actor => {
+        totalAmount += (actor.camira_quantity * actor.camira_price) + (actor.mobile_quantity * actor.mobile_price);
+      });
+
+      document.getElementById('total-amount').innerText = `${totalAmount.toFixed(2)} KWD`;
+    }
+
+    // Payment button click handler
+    document.getElementById('pay-button').addEventListener('click', () => {
+      const paymentModal = document.getElementById('payment-modal');
+      paymentModal.style.display = 'flex';
+    });
+
+    // Payment form submission handler
+    // Payment form submission handler
+    // Payment form submission handler
+  // Payment form submission handler
+  document.getElementById('payment-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const paymentMethod = formData.get('payment_method');
+    const cashReceived = parseFloat(formData.get('cash_received'));
+
+    // Get the selected showtime
+    const showtimeSelect = document.getElementById('showtime-select');
+    const selectedShowtime = showtimeSelect.value;
+    const [eventSelectedDate, eventSelectedShowtime] = selectedShowtime.split(' ');
+
+    // Calculate cash refund if payment method is cash
+    let cashRefund = 0;
+    if (paymentMethod === 'Cash') {
+      if (cashReceived < totalAmount) {
+        alert('Cash received is less than the total amount.');
+        return;
+      }
+      cashRefund = cashReceived - totalAmount;
+    }
+
+    // Prepare transaction data
+    const transactionData = {
+      event_id: eventId,
+      event_name: event.event_name, // Add event name
+      event_selected_date: eventSelectedDate, // Add selected date
+      event_selected_showtime: eventSelectedShowtime, // Add selected showtime
+      actors: selectedActors.map(actor => ({
+        actor_id: actor.id,
+        actor_name: actor.actor_name, // Add actor name
+        camira_photos: actor.camira_quantity,
+        mobile_photos: actor.mobile_quantity,
+      })),
+      total_amount: totalAmount,
+      payment_method: paymentMethod,
+      cash_received: cashReceived,
+      cash_refund: cashRefund,
+    };
+
+    // Send transaction data to the server
+    try {
+      const response = await fetch('/add-transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(transactionData),
+      });
+
+      if (!response.ok) throw new Error(await response.text());
+
+      const result = await response.json();
+      
+      
+      // Show success message with modern effect
+      const successMessage = document.createElement('div');
+      successMessage.classList.add('fixed', 'top-4', 'right-4', 'bg-green-500', 'text-white', 'px-6', 'py-4', 'rounded-lg', 'shadow-lg', 'transform', 'transition-transform', 'duration-300', 'translate-x-full');
+      successMessage.innerText = result.message || "Payment successful!";
+
+      document.body.appendChild(successMessage);
+      // Generate and display the receipt
+      
+
+      // Animate the success message
+      setTimeout(() => {
+        successMessage.classList.remove('translate-x-full');
+      }, 100);
+
+      // Hide the success message after 3 seconds
+      setTimeout(() => {
+        successMessage.classList.add('translate-x-full');
+        setTimeout(() => {
+          successMessage.remove();
+        }, 300); // Wait for the animation to complete
+      }, 3000);
+
+      // Reset the form and quantities after successful payment
+      document.getElementById('payment-form').reset();
+      selectedActors.forEach(actor => {
+        actor.camira_quantity = 0;
+        actor.mobile_quantity = 0;
+        document.getElementById(`camira-${actor.id}`).innerText = '0';
+        document.getElementById(`mobile-${actor.id}`).innerText = '0';
+      });
+      calculateTotalAmount(); // Update the total amount to 0
+      generateReceipt(transactionData, result.transactionId);
+
+      // Close the payment modal
+      const paymentModal = document.getElementById('payment-modal');
+      paymentModal.style.display = 'none';
+
+    } catch (error) {
+      console.error('Error completing transaction:', error);
+      alert('Failed to complete transaction. Please try again.');
+    }
+  });
+    
+    
+
+    // Function to generate and display the receipt
+    function generateReceipt(transactionData, transactionId) {
+      // Populate receipt details
+      document.getElementById('receipt-transaction-id').textContent = transactionId;
+      document.getElementById('receipt-event-name').textContent = transactionData.event_name;
+      document.getElementById('receipt-date').textContent = new Date().toLocaleDateString();
+      document.getElementById('receipt-payment-method').textContent = transactionData.payment_method;
+      document.getElementById('receipt-total-amount').textContent = `${transactionData.total_amount.toFixed(2)} KWD`;
+
+      // Generate QR code 
+      const qrcodeContainer = document.getElementById('receipt-qrcode');
+      qrcodeContainer.innerHTML = ''; // Clear previous QR code
+      new QRCode(qrcodeContainer, {
+        text: `Transaction ID: ${transactionId}`,
+        width: 128,
+        height: 128,
+      });
+
+      // Show the receipt modal
+      const receiptModal = document.getElementById('receipt-modal');
+      receiptModal.style.display = 'flex';
+    }
+
+    // Print receipt
+    document.getElementById('print-receipt').addEventListener('click', () => {
+      window.print();
+    });
+
+    // Close receipt modal
+    document.getElementById('close-receipt-modal').addEventListener('click', () => {
+      const receiptModal = document.getElementById('receipt-modal');
+      receiptModal.style.display = 'none';
+    });
+
+    // Print receipt function (optional)
+    function printReceipt(transactionData) {
+      // Implement receipt printing logic here
+      console.log('Printing receipt:', transactionData);
+    }
+
+    // Close button functionality
+    const closeButton = document.getElementById('close-button');
+    closeButton.addEventListener('click', () => {
+      window.location.href = '/dashboard'; // Redirect to dashboard
+    });
+
+    // Fetch event and actors when the page loads
+    document.addEventListener('DOMContentLoaded', fetchEventAndActors);
+
+    // Close payment modal
+    const closePaymentModalButton = document.getElementById('close-payment-modal');
+    closePaymentModalButton.addEventListener('click', () => {
+      const paymentModal = document.getElementById('payment-modal');
+      paymentModal.style.display = 'none';
+    });
+
+
+    // All Camira Button
+    document.getElementById('all-camira-button').addEventListener('click', () => {
+      selectedActors.forEach(actor => {
+        actor.camira_quantity = 1; // Set Camira photos to 1 for all actors
+        document.getElementById(`camira-${actor.id}`).innerText = actor.camira_quantity;
+      });
+      calculateTotalAmount(); // Update the total amount
+    });
+
+    // All Mobile Button
+    document.getElementById('all-mobile-button').addEventListener('click', () => {
+      selectedActors.forEach(actor => {
+        actor.mobile_quantity = 1; // Set Mobile photos to 1 for all actors
+        document.getElementById(`mobile-${actor.id}`).innerText = actor.mobile_quantity;
+      });
+      calculateTotalAmount(); // Update the total amount
+    });
+
+    // Clear All Button
+    document.getElementById('clear-all-button').addEventListener('click', () => {
+      selectedActors.forEach(actor => {
+        actor.camira_quantity = 0; // Reset Camira photos to 0
+        actor.mobile_quantity = 0; // Reset Mobile photos to 0
+        document.getElementById(`camira-${actor.id}`).innerText = actor.camira_quantity;
+        document.getElementById(`mobile-${actor.id}`).innerText = actor.mobile_quantity;
+      });
+      calculateTotalAmount(); // Update the total amount
+    });
+
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+</body>
+</html>

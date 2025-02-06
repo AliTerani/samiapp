@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Event</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    .glow-effect:focus {
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+    }
+    .file-upload:hover {
+      transform: scale(1.02);
+      transition: transform 0.2s ease-in-out;
+    }
+    .custom-dropdown {
+      appearance: none;
+      background: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") no-repeat right 0.75rem center;
+      background-size: 1rem;
+    }
+    .close-button {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: white;
+      font-size: 1.5rem;
+      transition: color 0.2s ease-in-out;
+    }
+    .close-button:hover {
+      color: #ff4757;
+    }
+    .image-preview {
+      display: none;
+      margin-top: 1rem;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: opacity 0.3s ease-in-out;
+    }
+    .image-preview img {
+      width: 100%;
+      height: auto;
+      border-radius: 0.5rem;
+    }
+    .showtime-tag {
+      display: inline-flex;
+      align-items: center;
+      background-color: #e5e7eb;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      margin: 0.25rem;
+      cursor: pointer;
+    }
+    .showtime-tag .close-icon {
+      margin-left: 0.5rem;
+      color: #6b7280;
+      cursor: pointer;
+    }
+    .showtime-tag .close-icon:hover {
+      color: #ef4444;
+    }
+
+    /* Percentage Input Styling */
+    .percentage-input {
+    display: flex;
+    align-items: center;
+    }
+
+    .percentage-input input {
+    width: 100%;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 0;
+    }
+
+    .percentage-input button {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    }
+
+    .percentage-input button:hover {
+    background-color: #2563eb;
+    }
+
+    .percentage-input button:first-child {
+    border-radius: 0.5rem 0 0 0.5rem;
+    }
+
+    .percentage-input button:last-child {
+    border-radius: 0 0.5rem 0.5rem 0;
+    }
+
+    /* Actors Modal Styling */
+    #actors-modal {
+    z-index: 1000;
+    }
+
+    .actor-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .actor-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .actor-card.bg-blue-50 {
+    background-color: #eff6ff;
+    }
+
+        .selected-actor {
+    display: inline-flex;
+    align-items: center;
+    background-color: #eff6ff;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    margin: 0.25rem;
+    font-size: 0.875rem;
+    color: #1e40af;
+    }
+
+    .selected-actor img {
+    margin-right: 0.5rem;
+    }
+
+    
+  </style>
+</head>
+<body class="bg-gradient-to-r from-blue-500 to-indigo-600 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-3xl relative">
+    <!-- Close Button -->
+    <button id="close-button" class="close-button">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <!-- Form Header -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
+      <h1 class="text-2xl font-bold text-white flex items-center">
+        <i class="fas fa-calendar-plus mr-3"></i>
+        Add Event
+      </h1>
+    </div>
+
+    <!-- Form Body -->
+    <form id="add-event-form" class="p-6 space-y-6">
+      <!-- Event Image -->
+      <div class="space-y-2">
+        <label class="block text-gray-700 font-medium flex items-center">
+          <i class="fas fa-image text-blue-500 mr-2"></i>
+          Event Image
+        </label>
+        <div class="flex items-center justify-center w-full">
+          <label class="file-upload flex flex-col items-center px-4 py-6 bg-blue-50 rounded-lg border-2 border-dashed border-blue-200 cursor-pointer hover:bg-blue-100 transition duration-300">
+            <i class="fas fa-cloud-upload-alt text-blue-500 text-3xl mb-2"></i>
+            <span class="text-gray-600">Upload an image</span>
+            <input type="file" id="event-image" name="event_image" class="hidden" accept="image/*" required>
+          </label>
+        </div>
+        <!-- Image Preview -->
+        <div id="image-preview" class="image-preview">
+          <img id="preview-image" src="#" alt="Event Image Preview" class="w-full h-auto">
+        </div>
+      </div>
+
+      <!-- Event Name and Location (Side by Side) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Event Name -->
+        <div class="space-y-2">
+          <label class="block text-gray-700 font-medium flex items-center">
+            <i class="fas fa-ticket-alt text-blue-500 mr-2"></i>
+            Event Name
+          </label>
+          <input type="text" name="event_name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Enter event name" required>
+        </div>
+
+        <!-- Event Location -->
+        <div class="space-y-2">
+          <label class="block text-gray-700 font-medium flex items-center">
+            <i class="fas fa-map-marker-alt text-blue-500 mr-2"></i>
+            Event Location
+          </label>
+          <input type="text" name="event_location" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Enter event location" required>
+        </div>
+      </div>
+
+      <!-- Event Country and Start Date (Side by Side) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Event Country -->
+        <div class="space-y-2">
+          <label class="block text-gray-700 font-medium flex items-center">
+            <i class="fas fa-globe text-blue-500 mr-2"></i>
+            Event Country
+          </label>
+          <input type="text" name="event_country" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Enter event country" required>
+        </div>
+
+        <!-- Event Start Date -->
+        <div class="space-y-2">
+          <label class="block text-gray-700 font-medium flex items-center">
+            <i class="fas fa-calendar-day text-blue-500 mr-2"></i>
+            Event Start Date
+          </label>
+          <input type="date" id="start-date" name="start_date" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" required>
+        </div>
+      </div>
+
+      <!-- Showtimes Section -->
+      <div class="space-y-2">
+        <label class="block text-gray-700 font-medium flex items-center">
+          <i class="fas fa-clock text-blue-500 mr-2"></i>
+          Showtimes
+        </label>
+        <div class="flex items-center space-x-2">
+          <select id="showtime-select" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect custom-dropdown">
+            <!-- Showtimes will be dynamically populated -->
+          </select>
+          <button type="button" id="add-showtime" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300">
+            <i class="fas fa-plus"></i>
+          </button>
+        </div>
+        <!-- Selected Showtimes -->
+        <div id="selected-showtimes" class="flex flex-wrap mt-2">
+          <!-- Selected showtimes will be dynamically inserted here -->
+        </div>
+      </div>
+
+      <!-- Add Actors Button -->
+    <div class="space-y-2">
+        <button type="button" id="add-actors-button" class="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-lg hover:from-blue-600 hover:to-indigo-700 transition duration-300 flex items-center justify-center">
+        <i class="fas fa-user-plus mr-2"></i>
+        Add Actors
+        </button>
+    </div>
+
+    <!-- Selected Actors Display -->
+    <div class="space-y-2">
+        <label class="block text-gray-700 font-medium flex items-center">
+        <i class="fas fa-users text-blue-500 mr-2"></i>
+        Selected Actors
+        </label>
+        <div id="selected-actors" class="flex flex-wrap gap-2">
+        <!-- Selected actors will be dynamically inserted here -->
+        </div>
+    </div>
+
+      <!-- Opening Balance -->
+      <div class="space-y-2">
+        <label class="block text-gray-700 font-medium flex items-center">
+          <i class="fas fa-wallet text-blue-500 mr-2"></i>
+          Opening Balance
+        </label>
+        <div class="flex items-center">
+          <input type="number" name="opening_balance" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Enter opening balance" required>
+          <select name="opening_balance_currency" class="ml-2 p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect custom-dropdown">
+            <option value="KWD">KWD (Kuwait)</option>
+            <option value="QAR">QAR (Qatar)</option>
+            <option value="AED">AED (UAE)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Camira Photo Service Price and Currency (Side by Side) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Camira Photo Service Price -->
+        <div class="space-y-2">
+          <label class="block text-gray-700 font-medium flex items-center">
+            <i class="fas fa-camera-retro text-blue-500 mr-2"></i>
+            Camira Photo Service Price
+          </label>
+          <div class="flex items-center">
+            <input type="number" name="camira_price" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Enter price" required>
+            <select name="camira_currency" class="ml-2 p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect custom-dropdown">
+              <option value="KWD">KWD (Kuwait)</option>
+              <option value="QAR">QAR (Qatar)</option>
+              <option value="AED">AED (UAE)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Mobile Photo Service Price -->
+        <div class="space-y-2">
+          <label class="block text-gray-700 font-medium flex items-center">
+            <i class="fas fa-mobile-alt text-blue-500 mr-2"></i>
+            Mobile Photo Service Price
+          </label>
+          <div class="flex items-center">
+            <input type="number" name="mobile_price" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Enter price" required>
+            <select name="mobile_currency" class="ml-2 p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect custom-dropdown">
+              <option value="KWD">KWD (Kuwait)</option>
+              <option value="QAR">QAR (Qatar)</option>
+              <option value="AED">AED (UAE)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected Actors Display -->
+    <div class="space-y-2">
+        <label class="block text-gray-700 font-medium flex items-center">
+        <i class="fas fa-users text-blue-500 mr-2"></i>
+        Selected Actors (Click to Swap Priority)
+        </label>
+        <div id="selected-actors" class="flex flex-wrap gap-2">
+        <!-- Selected actors will be dynamically inserted here -->
+        </div>
+    </div>
+    
+      <!-- Percentage Inputs -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <!-- Producer Percentage -->
+    <div class="space-y-2">
+      <label class="block text-gray-700 font-medium flex items-center">
+        <i class="fas fa-user-tie text-blue-500 mr-2"></i>
+        Producer %
+      </label>
+      <div class="flex items-center">
+        <button type="button" class="px-3 py-2 bg-blue-500 text-white rounded-l-lg hover:bg-blue-600 transition duration-300" onclick="updatePercentage('producer', -1)">
+          <i class="fas fa-minus"></i>
+        </button>
+        <input type="number" name="producer_percentage" class="w-full p-3 border border-gray-300 text-center focus:outline-none glow-effect" value="0" min="0" max="100" step="1" required>
+        <button type="button" class="px-3 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition duration-300" onclick="updatePercentage('producer', 1)">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+    </div>
+  
+    <!-- Actors Percentage -->
+    <div class="space-y-2">
+      <label class="block text-gray-700 font-medium flex items-center">
+        <i class="fas fa-users text-blue-500 mr-2"></i>
+        Actors %
+      </label>
+      <div class="flex items-center">
+        <button type="button" class="px-3 py-2 bg-blue-500 text-white rounded-l-lg hover:bg-blue-600 transition duration-300" onclick="updatePercentage('actors', -1)">
+          <i class="fas fa-minus"></i>
+        </button>
+        <input type="number" name="actors_percentage" class="w-full p-3 border border-gray-300 text-center focus:outline-none glow-effect" value="0" min="0" max="100" step="1" required>
+        <button type="button" class="px-3 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition duration-300" onclick="updatePercentage('actors', 1)">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+    </div>
+  
+    <!-- Photograph Percentage -->
+    <div class="space-y-2">
+      <label class="block text-gray-700 font-medium flex items-center">
+        <i class="fas fa-camera text-blue-500 mr-2"></i>
+        Photograph %
+      </label>
+      <div class="flex items-center">
+        <button type="button" class="px-3 py-2 bg-blue-500 text-white rounded-l-lg hover:bg-blue-600 transition duration-300" onclick="updatePercentage('photograph', -1)">
+          <i class="fas fa-minus"></i>
+        </button>
+        <input type="number" name="photograph_percentage" class="w-full p-3 border border-gray-300 text-center focus:outline-none glow-effect" value="0" min="0" max="100" step="1" required>
+        <button type="button" class="px-3 py-2 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 transition duration-300" onclick="updatePercentage('photograph', 1)">
+          <i class="fas fa-plus"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Add this below the Percentage Inputs section -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    <!-- Receipt Print Checkbox -->
+  <div class="space-y-2">
+    <label class="block text-gray-700 font-medium flex items-center">
+      <i class="fas fa-print text-blue-500 mr-2"></i>
+      Receipt
+    </label>
+    <input type="checkbox" name="receipt_print" class="w-5 h-5 border border-gray-300 rounded-lg focus:outline-none glow-effect" value="1">
+  </div>
+
+  <!-- Queue Checkbox -->
+  <div class="space-y-2">
+    <label class="block text-gray-700 font-medium flex items-center">
+      <i class="fas fa-list-ol text-blue-500 mr-2"></i>
+      Queue
+    </label>
+    <input type="checkbox" name="queue" class="w-5 h-5 border border-gray-300 rounded-lg focus:outline-none glow-effect" value="1">
+  </div>
+  </div>
+  </div>
+    <!-- Hidden input for selected actors -->
+    <input type="hidden" name="selected_actors">
+
+      <!-- Submit Button -->
+      <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-lg hover:from-blue-600 hover:to-indigo-700 transition duration-300 flex items-center justify-center">
+        <i class="fas fa-plus-circle mr-2"></i>
+        Add Event
+      </button>
+    </form>
+  </div>
+  <!-- Actors Selection Popup -->
+<div id="actors-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
+        <h2 class="text-2xl font-bold text-white flex items-center">
+          <i class="fas fa-users mr-3"></i>
+          Select Actors
+        </h2>
+        <!-- Search Bar -->
+        <div class="mt-4">
+          <input type="text" id="actor-search" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Search actors...">
+        </div>
+      </div>
+  
+      <!-- Modal Body -->
+      <div class="p-6 max-h-96 overflow-y-auto">
+        <div id="actors-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <!-- Actors will be dynamically inserted here -->
+        </div>
+      </div>
+  
+      <!-- Modal Footer -->
+      <div class="bg-gray-50 p-4 flex justify-end">
+        <button id="close-modal" class="px-6 py-2 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300 transition duration-300">
+          Close
+        </button>
+        <button id="save-actors" class="ml-2 px-6 py-2 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 transition duration-300">
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Close button functionality
+    const closeButton = document.getElementById('close-button');
+    closeButton.addEventListener('click', () => {
+      window.location.href = '/dashboard';
+    });
+
+    // Image preview functionality
+    const eventImageInput = document.getElementById('event-image');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImage = document.getElementById('preview-image');
+
+    eventImageInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewImage.src = e.target.result;
+          imagePreview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        previewImage.src = '#';
+        imagePreview.style.display = 'none';
+      }
+    });
+
+    // Generate showtimes from 03:00 PM to 10:00 PM in 30-minute increments
+    function generateShowtimes() {
+      const showtimes = [];
+      let currentTime = new Date();
+      currentTime.setHours(15, 0, 0); // Start at 3:00 PM
+
+      while (currentTime.getHours() < 22 || (currentTime.getHours() === 22 && currentTime.getMinutes() === 0)) {
+        const hours = currentTime.getHours();
+        const minutes = currentTime.getMinutes();
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = hours % 12 || 12;
+        const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+        showtimes.push(`${formattedHours}:${formattedMinutes} ${ampm}`);
+        currentTime.setMinutes(currentTime.getMinutes() + 30); // Increment by 30 minutes
+      }
+
+      return showtimes;
+    }
+
+    // Populate showtime dropdown
+    const showtimeSelect = document.getElementById('showtime-select');
+    const showtimes = generateShowtimes();
+    showtimes.forEach(time => {
+      const option = document.createElement('option');
+      option.value = time;
+      option.textContent = time;
+      showtimeSelect.appendChild(option);
+    });
+
+    // Add showtime functionality
+    const addShowtimeButton = document.getElementById('add-showtime');
+    const selectedShowtimesContainer = document.getElementById('selected-showtimes');
+    const selectedShowtimes = new Set();
+
+    addShowtimeButton.addEventListener('click', () => {
+      const selectedTime = showtimeSelect.value;
+      if (!selectedTime || selectedShowtimes.has(selectedTime)) return;
+
+      selectedShowtimes.add(selectedTime);
+
+      const showtimeTag = document.createElement('div');
+      showtimeTag.classList.add('showtime-tag');
+      showtimeTag.innerHTML = `
+        <span>${selectedTime}</span>
+        <i class="fas fa-times close-icon"></i>
+      `;
+
+      // Remove showtime when close icon is clicked
+      showtimeTag.querySelector('.close-icon').addEventListener('click', () => {
+        selectedShowtimes.delete(selectedTime);
+        showtimeTag.remove();
+      });
+
+      selectedShowtimesContainer.appendChild(showtimeTag);
+    });
+
+    // Form submission handler
+    document.getElementById('add-event-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const formData = new FormData(event.target);
+
+  // Add selected showtimes to form data
+  const showtimes = Array.from(selectedShowtimes); // Convert Set to Array
+  formData.append('showtimes', JSON.stringify(showtimes));
+
+  // Add selected actors to form data
+  const selectedActorsField = document.querySelector('input[name="selected_actors"]');
+  const selectedActorsValue = JSON.stringify(selectedActors); // Ensure this is a JSON string
+  selectedActorsField.value = selectedActorsValue;
+
+  // Add checkbox values to form data
+  const receiptPrint = document.querySelector('input[name="receipt_print"]').checked;
+  const queue = document.querySelector('input[name="queue"]').checked;
+  formData.append('receipt_print', receiptPrint);
+  formData.append('queue', queue);
+
+  try {
+    const response = await fetch('/add-event', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) throw new Error(await response.text());
+
+    const result = await response.json();
+
+    // Show success message with modern effect
+    const successMessage = document.createElement('div');
+    successMessage.classList.add('fixed', 'top-4', 'right-4', 'bg-green-500', 'text-white', 'px-6', 'py-4', 'rounded-lg', 'shadow-lg', 'transform', 'transition-transform', 'duration-300', 'translate-x-full');
+    successMessage.innerText = result.message;
+
+    document.body.appendChild(successMessage);
+
+    // Animate the success message
+    setTimeout(() => {
+      successMessage.classList.remove('translate-x-full');
+    }, 100);
+
+    // Redirect to dashboard after 2 seconds
+    setTimeout(() => {
+      window.location.href = '/dashboard';
+    }, 2000);
+  } catch (error) {
+    console.error('Error adding event:', error);
+    alert('An error occurred: ' + error.message);
+  }
+});
+
+
+    // Function to update percentage values
+    function updatePercentage(type, change) {
+    const input = document.querySelector(`input[name="${type}_percentage"]`);
+    let value = parseInt(input.value) + change;
+
+    // Ensure the value stays within 0-100
+    if (value < 0) value = 0;
+    if (value > 100) value = 100;
+
+    input.value = value;
+    }
+
+    // Actors Modal Functionality
+const addActorsButton = document.getElementById('add-actors-button');
+const actorsModal = document.getElementById('actors-modal');
+const closeModalButton = document.getElementById('close-modal');
+const saveActorsButton = document.getElementById('save-actors');
+const actorsListContainer = document.getElementById('actors-list');
+const actorSearchInput = document.getElementById('actor-search');
+
+let selectedActors = [];
+let actors = []; // Global variable to store fetched actors
+
+// Open modal
+
+
+addActorsButton.addEventListener('click', async () => {
+  try {
+    const response = await fetch('/get-actors');
+    if (!response.ok) throw new Error('Failed to fetch actors');
+
+    actors = await response.json(); // Store fetched actors
+    actorsListContainer.innerHTML = ''; // Clear previous content
+
+    // Populate actors list
+    actors.forEach(actor => {
+      const actorCard = document.createElement('div');
+      actorCard.classList.add('actor-card', 'bg-white', 'p-4', 'rounded-lg', 'shadow-md', 'cursor-pointer', 'transition-transform', 'duration-300', 'hover:scale-105');
+      actorCard.innerHTML = `
+        <img src="${actor.actor_image}" alt="${actor.actor_name}" class="w-full h-32 object-cover rounded-lg mb-2">
+        <h3 class="text-lg font-semibold text-gray-800 text-center">${actor.actor_name}</h3>
+      `;
+
+      // Toggle actor selection
+      actorCard.addEventListener('click', () => {
+        actorCard.classList.toggle('bg-blue-50');
+        if (selectedActors.includes(actor.id)) {
+          selectedActors = selectedActors.filter(id => id !== actor.id); // Remove actor
+        } else {
+          selectedActors.push(actor.id); // Add actor
+        }
+      });
+
+      actorsListContainer.appendChild(actorCard);
+    });
+
+    // Show modal
+    actorsModal.classList.remove('hidden');
+  } catch (error) {
+    console.error('Error fetching actors:', error);
+    alert('Failed to load actors. Please try again.');
+  }
+});
+
+    
+// Close modal
+closeModalButton.addEventListener('click', () => {
+  actorsModal.classList.add('hidden');
+});
+
+// Save selected actors
+// Save selected actors
+saveActorsButton.addEventListener('click', () => {
+  const selectedActorsField = document.querySelector('input[name="selected_actors"]');
+  selectedActorsField.value = JSON.stringify(selectedActors); // Store selected actors as JSON
+  actorsModal.classList.add('hidden');
+  displaySelectedActors();
+  // Display selected actors
+  const selectedActorsContainer = document.getElementById('selected-actors');
+  selectedActorsContainer.innerHTML = '';
+  selectedActors.forEach(actorId => {
+    const actor = actors.find(a => a.id === actorId);
+    if (actor) {
+      const actorTag = document.createElement('div');
+      actorTag.classList.add('flex', 'items-center', 'bg-blue-50', 'px-3', 'py-2', 'rounded-full', 'text-sm', 'text-blue-800');
+      actorTag.innerHTML = `
+        <img src="${actor.actor_image}" alt="${actor.actor_name}" class="w-6 h-6 rounded-full object-cover mr-2">
+        <span>${actor.actor_name}</span>
+      `;
+      selectedActorsContainer.appendChild(actorTag);
+    }
+  });
+});
+
+// Search functionality
+actorSearchInput.addEventListener('input', () => {
+  const searchTerm = actorSearchInput.value.toLowerCase();
+  const actorCards = actorsListContainer.querySelectorAll('.actor-card');
+
+  actorCards.forEach(card => {
+    const actorName = card.querySelector('h3').textContent.toLowerCase();
+    if (actorName.includes(searchTerm)) {
+      card.style.display = 'block';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+});
+
+let selectedForSwap = null; // Track the first actor clicked for swapping
+
+// Function to swap two actors
+function swapActors(index1, index2) {
+  if (index1 === index2) return; // No need to swap if indices are the same
+
+  // Swap in the selectedActors array
+  [selectedActors[index1], selectedActors[index2]] = [selectedActors[index2], selectedActors[index1]];
+
+  // Swap in the DOM
+  const selectedActorsContainer = document.getElementById('selected-actors');
+  const actorTags = selectedActorsContainer.querySelectorAll('.selected-actor');
+  const temp = actorTags[index1].outerHTML;
+  actorTags[index1].outerHTML = actorTags[index2].outerHTML;
+  actorTags[index2].outerHTML = temp;
+
+  // Update data-index attributes
+  actorTags[index1].setAttribute('data-index', index1);
+  actorTags[index2].setAttribute('data-index', index2);
+}
+
+// Function to display selected actors
+function displaySelectedActors() {
+  const selectedActorsContainer = document.getElementById('selected-actors');
+  selectedActorsContainer.innerHTML = '';
+
+  selectedActors.forEach((actorId, index) => {
+    const actor = actors.find(a => a.id === actorId);
+    if (actor) {
+      const actorTag = document.createElement('div');
+      actorTag.classList.add('selected-actor', 'flex', 'items-center', 'bg-blue-50', 'px-3', 'py-2', 'rounded-full', 'text-sm', 'text-blue-800', 'cursor-pointer', 'hover:bg-blue-100', 'transition-colors');
+      actorTag.setAttribute('data-index', index); // Add data-index for tracking
+      actorTag.innerHTML = `
+        <img src="${actor.actor_image}" alt="${actor.actor_name}" class="w-6 h-6 rounded-full object-cover mr-2">
+        <span>${actor.actor_name}</span>
+      `;
+
+      // Add click event for swapping
+      actorTag.addEventListener('click', () => {
+        if (selectedForSwap === null) {
+          // First actor clicked
+          selectedForSwap = index;
+          actorTag.classList.add('ring-2', 'ring-blue-500'); // Highlight the selected actor
+        } else {
+          // Second actor clicked - perform swap
+          swapActors(selectedForSwap, index);
+          selectedForSwap = null; // Reset swap selection
+          document.querySelectorAll('.selected-actor').forEach(tag => tag.classList.remove('ring-2', 'ring-blue-500')); // Remove highlight
+        }
+      });
+
+      selectedActorsContainer.appendChild(actorTag);
+    }
+  });
+}
+  </script>
+  
+</body>
+</html>

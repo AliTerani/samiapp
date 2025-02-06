@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .card-button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(to right, #4CAF50, #2E7D32);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%; /* Full width for small screens */
+      max-width: 150px; /* Limit card size */
+      margin: auto;
+    }
+
+    .card-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-r from-blue-500 to-indigo-600 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-screen-lg bg-white rounded-2xl shadow-2xl p-6">
+    <h1 class="text-2xl font-bold text-gray-800 mb-4">Generate Reports</h1>
+
+    <!-- Event Selection -->
+    <label class="block text-gray-700 font-medium">Select Event</label>
+    <select id="event-select" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect"></select>
+
+    <!-- Date Selection -->
+    <label class="block text-gray-700 font-medium mt-4">Select Date</label>
+    <select id="date-select" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect">
+      <!-- Dates will be dynamically populated -->
+    </select>
+
+    <!-- Showtime Selection -->
+    <label class="block text-gray-700 font-medium mt-4">Select Showtime</label>
+    <select id="showtime-select" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect">
+      <!-- Showtimes will be dynamically populated -->
+    </select>
+
+    <!-- Action Buttons -->
+<div class="space-y-6 mt-6">
+  <!-- Event Reports Section -->
+  <div class="space-y-2">
+    <h2 class="text-lg font-bold text-gray-800 text-right border-b-2 border-gray-300 pb-2">فعلي</h2>
+    <div class="grid grid-cols-4 gap-2">
+      <div id="event-full-report-button" class="card-button">
+        <div class="card-icon">📖</div>
+        <div> نهاية العمل</div>
+      </div>
+      <div id="event-date-report-button" class="card-button">
+        <div class="card-icon">📅</div>
+        <div>تقرير نهاية اليوم</div>
+      </div>
+      <div id="actors-request-button" class="card-button">
+        <div class="card-icon">🎭</div>
+        <div>طلبات الممثلين</div>
+      </div>
+      <div id="end-of-day-button" class="card-button">
+        <div class="card-icon">📊</div>
+        <div>اغلاق العرض</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Section -->
+  <div class="space-y-2">
+    <h2 class="text-lg font-bold text-gray-800 text-right border-b-2 border-gray-300 pb-2">يدوي</h2>
+    <div class="grid grid-cols-4 gap-2">
+      <div id="event-full-report-button" class="card-button">
+        <div class="card-icon">📖</div>
+        <div> نهاية العمل</div>
+      </div>
+      <div id="event-date-report-button" class="card-button">
+        <div class="card-icon">📅</div>
+        <div>تقرير نهاية اليوم</div>
+      </div>
+      <div id="actors-request-button" class="card-button">
+        <div class="card-icon">🎭</div>
+        <div>طلبات الممثلين</div>
+      </div>
+      <div id="end-of-day-button" class="card-button">
+        <div class="card-icon">📊</div>
+        <div>اغلاق العرض</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    <!-- Report Display Area -->
+    <div id="report-content" class="mt-6 hidden">
+      <h2 class="text-xl font-bold text-gray-800">Report Details</h2>
+      <div id="report-data"></div>
+    </div>
+  </div>
+
+  <div class="flex justify-end mt-6">
+    <button id="close-button" class="modern-button bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">
+      Close
+    </button>
+  </div>
+  
+  <script>
+    document.getElementById('close-button').addEventListener('click', () => {
+      window.location.href = '/dashboard'; // Redirect to the dashboard
+    });
+  </script>
+  
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const eventSelect = document.getElementById('event-select');
+      const dateSelect = document.getElementById('date-select');
+      const showtimeSelect = document.getElementById('showtime-select');
+      const endOfDayButton = document.getElementById('end-of-day-button');
+      const generalReportButton = document.getElementById('general-report-button');
+      const reportContent = document.getElementById('report-content');
+      const reportData = document.getElementById('report-data');
+
+      // Fetch events and populate the dropdown
+      const response = await fetch('/get-active-events');
+      const events = await response.json();
+      eventSelect.innerHTML = events.map(event => `<option value="${event.id}">${event.event_name}</option>`).join('');
+
+      // Update dates when event changes
+      eventSelect.addEventListener('change', async () => {
+        const eventId = eventSelect.value;
+
+        if (eventId) {
+          const eventResponse = await fetch(`/get-event?id=${eventId}`);
+          const event = await eventResponse.json();
+          const showtimes = JSON.parse(event.showtimes);
+
+          // Populate date dropdown with event dates
+          dateSelect.innerHTML = Object.keys(showtimes)
+            .map(date => `<option value="${date}">${date}</option>`)
+            .join('');
+
+          // Trigger change event to populate showtimes for the first date
+          dateSelect.dispatchEvent(new Event('change'));
+        }
+      });
+
+      // Update showtimes when date changes
+      dateSelect.addEventListener('change', () => {
+        const eventId = eventSelect.value;
+        const selectedDate = dateSelect.value;
+
+        if (eventId && selectedDate) {
+          const event = events.find(e => e.id == eventId);
+          const showtimes = JSON.parse(event.showtimes);
+
+          // Populate showtimes for the selected date
+          showtimeSelect.innerHTML = '';
+          if (showtimes[selectedDate]) {
+            const showtimeOption = document.createElement('option');
+            showtimeOption.value = showtimes[selectedDate];
+            showtimeOption.textContent = showtimes[selectedDate];
+            showtimeSelect.appendChild(showtimeOption);
+          }
+        }
+      });
+
+      // Handle "End of Day" report generation
+      endOfDayButton.addEventListener('click', async () => {
+  const eventId = eventSelect.value;
+  const selectedDate = dateSelect.value;
+  const selectedShowtime = showtimeSelect.value;
+
+  if (!eventId || !selectedDate || !selectedShowtime) {
+    alert('Please select event, date, and showtime.');
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `/generate-end-of-day-report?event_id=${eventId}&date=${selectedDate}&showtime=${selectedShowtime}`
+    );
+
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message);
+
+    // Auto-print the PDF
+    window.open(result.pdfPath, '_blank');
+    alert('Receipt generated and sent to the printer.');
+  } catch (error) {
+    console.error('Error generating receipt:', error);
+    alert('Failed to generate receipt. Please try again.');
+  }
+});
+
+      // Handle "General Report" generation
+      generalReportButton.addEventListener('click', async () => {
+        const reportResponse = await fetch(`/get-general-report`);
+        const report = await reportResponse.json();
+
+        displayReport(report);
+      });
+
+      function displayReport(report) {
+        reportData.innerHTML = `
+          <p><strong>Event Name:</strong> ${report.event_name}</p>
+          <p><strong>Date:</strong> ${report.date}</p>
+          <p><strong>Showtime:</strong> ${report.showtime}</p>
+          <hr>
+          <p><strong>Total Amount:</strong> ${report.total_amount} KWD</p>
+        `;
+
+        reportContent.classList.remove('hidden');
+      }
+
+      // Trigger initial event change
+      eventSelect.dispatchEvent(new Event('change'));
+    });
+  </script>
+  <script>
+    document.getElementById('actors-request-button').addEventListener('click', async () => {
+      const eventId = document.getElementById('event-select').value;
+      const selectedDate = document.getElementById('date-select').value;
+      const selectedShowtime = document.getElementById('showtime-select').value;
+  
+      if (!eventId || !selectedDate || !selectedShowtime) {
+        alert("Please select event, date, and showtime.");
+        return;
+      }
+  
+      try {
+        const response = await fetch(`/generate-actors-request?event_id=${eventId}&date=${selectedDate}&showtime=${selectedShowtime}`);
+        const result = await response.json();
+  
+        if (!response.ok) throw new Error(result.message);
+  
+        alert("Actors Request generated and sent to the printer.");
+      } catch (error) {
+        console.error("Error generating Actors Request:", error);
+        alert("Failed to generate Actors Request. Please try again.");
+      }
+    });
+  </script>
+  
+  <script>
+    document.getElementById('event-date-report-button').addEventListener('click', async () => {
+      const eventId = document.getElementById('event-select').value;
+      const selectedDate = document.getElementById('date-select').value;
+  
+      if (!eventId || !selectedDate) {
+        alert("Please select an event and date.");
+        return;
+      }
+  
+      try {
+        const response = await fetch(`/generate-event-date-report?event_id=${eventId}&date=${selectedDate}`);
+        const result = await response.json();
+  
+        if (!response.ok) throw new Error(result.message);
+  
+        // Automatically download the PDF
+        const link = document.createElement("a");
+        link.href = result.pdfPath;
+        link.download = "Event_Date_Report.pdf";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+  
+        alert("Event Date Report generated and downloaded.");
+      } catch (error) {
+        console.error("Error generating Event Date Report:", error);
+        alert("Failed to generate Event Date Report. Please try again.");
+      }
+    });
+  </script>
+
+<script>
+  document.getElementById('event-full-report-button').addEventListener('click', async () => {
+    const eventId = document.getElementById('event-select').value;
+
+    if (!eventId) {
+      alert("Please select an event.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/generate-event-full-report?event_id=${eventId}`);
+      const result = await response.json();
+
+      if (!response.ok) throw new Error(result.message);
+
+      // Automatically download the PDF
+      const link = document.createElement("a");
+      link.href = result.pdfPath;
+      link.download = "Event_Full_Report.pdf";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      alert("Event Full Report generated and downloaded.");
+    } catch (error) {
+      console.error("Error generating Event Full Report:", error);
+      alert("Failed to generate Event Full Report. Please try again.");
+    }
+  });
+</script>
+
+  
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Actors</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Add Font Awesome for icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Custom glow effect for inputs on focus */
+    .glow-effect:focus {
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+    }
+
+    /* Custom file upload hover effect */
+    .file-upload:hover {
+      transform: scale(1.02);
+      transition: transform 0.2s ease-in-out;
+    }
+
+    /* Custom dropdown styling */
+    .custom-dropdown {
+      appearance: none;
+      background: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") no-repeat right 0.75rem center;
+      background-size: 1rem;
+    }
+
+    /* Close button styling */
+    .close-button {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: white;
+      font-size: 1.5rem;
+      transition: color 0.2s ease-in-out;
+    }
+
+    .close-button:hover {
+      color: #ff4757; /* Red color on hover */
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-r from-blue-500 to-indigo-600 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300 hover:shadow-3xl relative">
+    <!-- Close Button -->
+    <button id="close-button" class="close-button">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <!-- Form Header -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 p-6">
+      <h1 class="text-2xl font-bold text-white flex items-center">
+        <i class="fas fa-user-plus mr-3"></i>
+        Add Actors
+      </h1>
+    </div>
+
+    <!-- Form Body -->
+    <form id="add-actors-form" class="p-6 space-y-6">
+      <!-- Actor Image -->
+      <div class="space-y-2">
+        <label class="block text-gray-700 font-medium flex items-center">
+          <i class="fas fa-image text-blue-500 mr-2"></i>
+          Actor Image
+        </label>
+        <div class="flex items-center justify-center w-full">
+          <label class="file-upload flex flex-col items-center px-4 py-6 bg-blue-50 rounded-lg border-2 border-dashed border-blue-200 cursor-pointer hover:bg-blue-100 transition duration-300">
+            <i class="fas fa-cloud-upload-alt text-blue-500 text-3xl mb-2"></i>
+            <span class="text-gray-600">Upload an image</span>
+            <input type="file" id="actor-image" name="actor_image" class="hidden" accept="image/*" required>
+          </label>
+        </div>
+        <!-- Image Preview -->
+        <div id="image-preview" class="image-preview">
+          <img id="preview-image" src="#" alt="Actor Image Preview" class="w-full h-auto">
+        </div>
+      </div>
+
+      <!-- Actor Name -->
+      <div class="space-y-2">
+        <label class="block text-gray-700 font-medium flex items-center">
+          <i class="fas fa-user text-blue-500 mr-2"></i>
+          Actor Name
+        </label>
+        <input type="text" name="actor_name" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Enter actor name" required>
+      </div>
+
+      <!-- Currency and Prices (Side by Side) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Currency -->
+        <div class="space-y-2">
+          <label class="block text-gray-700 font-medium flex items-center">
+            <i class="fas fa-coins text-blue-500 mr-2"></i>
+            Currency
+          </label>
+          <select name="currency" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect custom-dropdown" required>
+            <option value="KWD">KWD (Kuwait)</option>
+            <option value="QAR">QAR (Qatar)</option>
+            <option value="AED">AED (UAE)</option>
+          </select>
+        </div>
+
+        <!-- Camira Price -->
+        <div class="space-y-2">
+          <label class="block text-gray-700 font-medium flex items-center">
+            <i class="fas fa-camera-retro text-blue-500 mr-2"></i>
+            Camira Price
+          </label>
+          <input type="number" name="camira_price" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Enter Camira price" required>
+        </div>
+
+        <!-- Mobile Price -->
+        <div class="space-y-2">
+          <label class="block text-gray-700 font-medium flex items-center">
+            <i class="fas fa-mobile-alt text-blue-500 mr-2"></i>
+            Mobile Price
+          </label>
+          <input type="number" name="mobile_price" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none glow-effect" placeholder="Enter Mobile price" required>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit" class="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold rounded-lg hover:from-blue-600 hover:to-indigo-700 transition duration-300 flex items-center justify-center">
+        <i class="fas fa-plus-circle mr-2"></i>
+        Add Actor
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // Close button functionality
+    const closeButton = document.getElementById('close-button');
+    closeButton.addEventListener('click', () => {
+      window.location.href = '/dashboard'; // Redirect to dashboard
+    });
+
+    // Image preview functionality
+    const actorImageInput = document.getElementById('actor-image');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImage = document.getElementById('preview-image');
+
+    actorImageInput.addEventListener('change', function () {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          previewImage.src = e.target.result;
+          imagePreview.style.display = 'block'; // Show the image preview
+        };
+        reader.readAsDataURL(file);
+      } else {
+        previewImage.src = '#';
+        imagePreview.style.display = 'none'; // Hide the image preview
+      }
+    });
+
+    // Form submission handler
+    document.getElementById('add-actors-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+
+      try {
+        const response = await fetch('/add-actor', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) throw new Error(await response.text());
+
+        const result = await response.json();
+
+        // Show success message with modern effect
+        const successMessage = document.createElement('div');
+        successMessage.classList.add('fixed', 'top-4', 'right-4', 'bg-green-500', 'text-white', 'px-6', 'py-4', 'rounded-lg', 'shadow-lg', 'transform', 'transition-transform', 'duration-300', 'translate-x-full');
+        successMessage.innerText = result.message;
+
+        document.body.appendChild(successMessage);
+
+        // Animate the success message
+        setTimeout(() => {
+          successMessage.classList.remove('translate-x-full');
+        }, 100);
+
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 2000);
+      } catch (error) {
+        alert('An error occurred: ' + error.message);
+      }
+    });
+  </script>
+</body>
+</html>
