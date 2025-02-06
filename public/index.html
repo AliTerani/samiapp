@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-blue-500 to-indigo-600 min-h-screen flex items-center justify-center">
+  <div class="w-full max-w-md p-8 bg-white rounded-2xl shadow-lg">
+    <!-- Logo Section -->
+    <div class="flex justify-center">
+        <img src="samilogo.png" alt="Logo" class="w-40 h-40 mb-6">
+      </div>
+    <!-- Welcome Text -->
+    
+    <!-- Login Form -->
+    <form id="login-form" class="mt-6 space-y-4">
+      <div>
+        <label class="block text-gray-700 font-medium">Username</label>
+        <input type="text" name="username" class="w-full mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your username" required>
+      </div>
+      <div>
+        <label class="block text-gray-700 font-medium">Password</label>
+        <input type="password" name="password" class="w-full mt-2 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Enter your password" required>
+      </div>
+      <button type="submit" class="w-full py-2 bg-blue-500 text-white font-bold rounded-md hover:bg-blue-600 focus:ring-2 focus:ring-blue-400">Login</button>
+    </form>
+    <div id="error-message" class="text-red-600 mt-4 text-center hidden"></div>
+  </div>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const data = Object.fromEntries(formData);
+
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) throw new Error(await response.text());
+
+        const result = await response.json();
+        alert(result.message);
+      } catch (error) {
+        document.getElementById('error-message').innerText = JSON.parse(error.message).message || 'An error occurred';
+        document.getElementById('error-message').classList.remove('hidden');
+      }
+    });
+  </script>
+
+<script>
+    document.getElementById('login-form').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const formData = new FormData(event.target);
+      const data = Object.fromEntries(formData);
+  
+      try {
+        const response = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+  
+        if (!response.ok) throw new Error(await response.text());
+  
+        // Redirect to dashboard on success
+        window.location.href = '/dashboard';
+      } catch (error) {
+        document.getElementById('error-message').innerText = JSON.parse(error.message).message || 'An error occurred';
+        document.getElementById('error-message').classList.remove('hidden');
+      }
+    });
+  </script>
+  
+
+
+</body>
+</html>
