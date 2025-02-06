@@ -33,7 +33,7 @@ const upload = multer({ storage: storage });
 const db = mysql.createConnection({
   host: "193.203.168.121",
   user: "u402158123_saminew2025", // Replace with your database username
-  password: "saminew@2025", // Replace with your database password
+  password: "Sami@2025", // Replace with your database password
   database: "u402158123_event_manage", // Replace with your database name
 });
 
